@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Pocket Ledger · Expense Tracker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <main class="shell">
+    <header class="topbar">
+      <a class="brand" href="{{ url_for('index') }}"><span class="brand-mark">PL</span> Pocket Ledger</a>
+      <span class="status"><i></i> MySQL connected</span>
+    </header>
+    <section class="intro">
+      <div><p class="eyebrow">PERSONAL FINANCE · DBMS MINI PROJECT</p><h1>Make every rupee<br><em>easy to track.</em></h1>
+        <p class="subhead">A simple expense ledger, stored directly in your MySQL database.</p></div>
+      <div class="summary"><span>ALL-TIME SPENDING</span><strong>₹{{ '%.2f'|format(total) }}</strong><small>Across {{ expenses|length }} visible record{% if expenses|length != 1 %}s{% endif %}</small></div>
+    </section>
+    {% with messages = get_flashed_messages(with_categories=true) %}{% if messages %}<div class="notices">{% for kind, message in messages %}<div class="notice {{ kind }}">{{ message }}</div>{% endfor %}</div>{% endif %}{% endwith %}
+    <section class="panel add-panel">
+      <div class="section-heading"><div><p class="eyebrow">NEW RECORD</p><h2>Add an expense</h2></div><span class="step">01 / CREATE</span></div>
+      <form action="{{ url_for('add_expense') }}" method="post" class="entry-form">
+        <label>Description<input name="title" maxlength="100" placeholder="e.g. Weekly groceries" required></label>
+        <label>Category<input name="category" maxlength="50" placeholder="e.g. Food" required></label>
+        <label>Amount (₹)<input name="amount" type="number" min="0.01" step="0.01" placeholder="0.00" required></label>
+        <label>Date<input name="expense_date" type="date" value="{{ today }}" required></label>
+        <button class="primary" type="submit">Add expense <span>↗</span></button>
+      </form>
+    </section>
+    <section class="panel records-panel">
+      <div class="section-heading records-heading"><div><p class="eyebrow">YOUR LEDGER</p><h2>Recent expenses</h2></div>
+        <form method="get" class="filter"><label for="category">Filter</label><select name="category" id="category" onchange="this.form.submit()"><option value="">All categories</option>{% for item in categories %}<option value="{{ item }}" {% if selected_category == item %}selected{% endif %}>{{ item }}</option>{% endfor %}</select></form>
+      </div>
+      {% if expenses %}<div class="table-wrap"><table><thead><tr><th>DESCRIPTION</th><th>CATEGORY</th><th>DATE</th><th>AMOUNT</th><th>ACTIONS</th></tr></thead><tbody>
+        {% for expense in expenses %}<tr>
+          <td><strong>{{ expense.title }}</strong><small>#{{ expense.expense_id }}</small></td><td><span class="tag">{{ expense.category }}</span></td><td>{{ expense.expense_date.strftime('%d %b %Y') }}</td><td class="amount">₹{{ '%.2f'|format(expense.amount) }}</td>
+          <td class="actions"><details><summary>Edit</summary><form class="edit-form" action="{{ url_for('update_expense', expense_id=expense.expense_id) }}" method="post"><label>Description<input name="title" maxlength="100" value="{{ expense.title }}" required></label><label>Category<input name="category" maxlength="50" value="{{ expense.category }}" required></label><label>Amount<input name="amount" type="number" min="0.01" step="0.01" value="{{ expense.amount }}" required></label><label>Date<input name="expense_date" type="date" value="{{ expense.expense_date }}" required></label><button class="primary" type="submit">Save changes</button></form></details><form action="{{ url_for('delete_expense', expense_id=expense.expense_id) }}" method="post" onsubmit="return confirm('Delete this expense?')"><button class="delete" type="submit">Delete</button></form></td>
+        </tr>{% endfor %}
+      </tbody></table></div>{% else %}<div class="empty"><span>↘</span><h3>No expenses here yet</h3><p>Add your first record above to see it saved in MySQL.</p></div>{% endif %}
+      <div class="table-foot"><span>LIVE FROM <b>expense_tracker_db.expenses</b></span><span>CRUD · INSERT / SELECT / UPDATE / DELETE</span></div>
+    </section>
+    <footer><span>POCKET LEDGER <b>·</b> DBMS MINI PROJECT</span><span>Flask + MySQL</span></footer>
+  </main>
+</body>
+</html>
